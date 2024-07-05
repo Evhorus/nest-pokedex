@@ -4,18 +4,24 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { isValidObjectId, Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Pokemon } from './entities/pokemon.entity';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
-import { isValidObjectId, Model } from 'mongoose';
-import { Pokemon } from './entities/pokemon.entity';
-import { InjectModel } from '@nestjs/mongoose';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class PokemonService {
+  private defaultLimit: number;
   constructor(
     @InjectModel(Pokemon.name)
     private readonly prokemonModel: Model<Pokemon>,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.defaultLimit = this.configService.get<number>('defaultLimit');
+  }
 
   async create(createPokemonDto: CreatePokemonDto) {
     createPokemonDto.name = createPokemonDto.name.toLocaleLowerCase();
@@ -27,8 +33,14 @@ export class PokemonService {
     }
   }
 
-  findAll() {
-    return `This action returns all pokemon`;
+  findAll(paginationDto: PaginationDto) {
+    const { limit = this.defaultLimit, offset = 0 } = paginationDto;
+    return this.prokemonModel
+      .find()
+      .limit(limit)
+      .skip(offset)
+      .sort({ no: 1 })
+      .select('-__v');
   }
 
   async findOne(term: string) {
@@ -75,8 +87,8 @@ export class PokemonService {
     // await pokemon.deleteOne();
     // const result = await this.prokemonModel.findByIdAndDelete(id);
     const { deletedCount } = await this.prokemonModel.deleteOne({ _id: id });
-    if(deletedCount === 0){
-      throw new BadRequestException(`Pokemon with id: '${id}' , not found`)
+    if (deletedCount === 0) {
+      throw new BadRequestException(`Pokemon with id: '${id}' , not found`);
     }
     return;
   }
