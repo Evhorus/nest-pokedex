@@ -43,3 +43,21 @@ http://localhost:3000/api/v2/seed
 
 - MongoDB
 - Nest
+
+# Production Build
+
+1. Create file **.evn.prod**
+2. Assing prod environment variables
+3. Build new docker image
+
+```
+docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+```
+
+4. To rerun this project, execute the following command
+
+```
+docker-compose -f docker-compose.prod.yaml --env-file .env.prod up -d
+```
+
+# Notes
